@@ -1,0 +1,151 @@
+---
+title: "Lab 2"
+author: "Kevin Nagpal"
+date: "4/7/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+# Loading Libraries
+library(tidyverse)
+library(leaflet)
+library(ggmap)
+library(readxl)
+library(here)
+```
+
+## Part One: Identifying Bad Visualizations (100 pts)
+
+#1
+This graph is telling us the percent of people who believe vaccines are safe in each country, and it's organized into 6 regions, highlighting outliers and major countries. I think the authors meant to convey how regions compare to each other in terms of this percentage, as the graph is organized by descending median percentage for each region, with Asia on top, and former Soviet Union on bottom.
+
+#2
+The variables that appear to be displayed in this visualization are country, region, and % of people who believe vaccines are safe.
+
+#3
+The aesthetics used are geom_point, with x being the percent of people in each country/region that believe that vaccines are safe, with there not being a clear y. The coloring is by region, as . Also, the theme used for the graph resembles the theme_economist() based on plots in the Economist magazine, as it's a light blue.
+
+#4
+I would call this a scatterplot in the form of a boxplot of sorts, as the median % of each region is shown.
+
+#5
+The lproblems are that there is no clear reponse variable, and the . The things I would improve about this graph are that I would add the percentage symbols by the numbers, and to add a clear response variable, as well as .
+
+### Improving the Bad Visualization
+```{r}
+# Reading in the Dataset
+
+vax_safe <- read_excel(here("wgm2018-dataset-crosstabs-all-countries.xlsx"), sheet = "Full dataset")
+```
+
+# Editing Dataset
+```{r}
+# Adding a variable for if People think Vaccines are Safe
+vax_safe <- vax_safe %>%
+  mutate(
+    safe = case_when(
+      Q25 == 1 ~ 1,
+      Q25 == 2 ~ 1,
+      TRUE ~ 0
+  ))
+
+
+```
+
+
+
+```{r, error = TRUE}
+vax_safe %>%
+  ggplot() +
+  geom_boxplot(aes(x = Regions_Report, y = WGM_indexr))
+```
+
+## Part Two: Broad Visualization Improvement (200 points)
+
+### Second Data Visualization Improvement
+
+#1
+
+Chart 5.5 on page 115. This graph is telling us the perceived safety of vaccines in France, which has a relatively low perception of vaccines among its people, among its demographics.
+
+#2
+
+The variables are demographic (education, age, sex, rural vs. urban, and parents status)
+
+Response is the percentage of people.
+
+#3
+
+Using geom_bar
+x = Demographic
+y = Proportion of vaccines in France
+
+
+#4
+
+A bar graph
+
+#5
+
+I would improve the coloring of this graph, as I feel it is confusing for there to be the same colors to be used for different demographic groups.
+
+#6
+```{r}
+# Creating percentage plot 
+
+vax_safe <- vax_safe %>%
+  mutate(
+    not_safe = case_when(
+      Q25 == 4 ~ 1,
+      Q25 == 5  ~ 1,
+      TRUE ~ 0
+  ))
+
+ggplot(vax_safe, aes(x = not_safe)) + 
+    geom_bar(aes(y = ..prop.., fill = factor(..x..)), stat="count") +
+    geom_text(aes( label = scales::percent(..prop..),
+                   y= ..prop.. ), stat= "count", vjust = -.5) +
+    labs(y = "Percent", fill="demographic") +
+    scale_y_continuous(labels = scales::percent)
+```
+
+
+
+### Third Data Visualization Improvement
+
+#1
+
+Chart 5.7 on page 121 could be improved. This graph is telling me the percentage of people reporting vaccinations in each country, with lighter shades of green corresponding to lower rates of vaccination, and vice versa for darker shades.
+
+#2
+
+The variables that appear to be displayed in this visualization are country and the proportion of people who say their children have been vaccinated.
+
+#3
+
+The aesthetics are leaflet, with countries colored by proportion of vaccination.
+
+#4
+
+I would call this a map.
+
+#5 
+
+The problem with the graph is that the color used would be green, which makes it a little difficult to . I would improve this by using a blue palette, which is much nicer to look at, as well as to view the differences between the lower and the higher levels, as I feel like it's easier to tell the differences between shades of blue than for shades of green.
+
+#6
+
+```{r}
+library(leaflet)
+
+my_map <- leaflet() %>% 
+  addTiles() # Adding mapping data
+my_map
+
+data(country.map, package = "choroplethrMaps")
+```
+
