@@ -58,25 +58,58 @@ countries <- read_excel("wgm2018-dataset-crosstabs-all-countries.xlsx", sheet = 
 
 ```{r, echo = FALSE}
 # from the dataset anything greater than three iS considered as yes 
-# 
 percent_yes <- function(question){
   if_else(question >= 3, 1, 0, missing = NULL)         
 }
 ```
 
 
+
+
 ```{r, echo=FALSE}
 countries <- countries %>%
   group_by(WP5) %>%
-  mutate(total = percent_yes(Q25),
-         percent = sum(total, na.rm = TRUE) / length(WP5))              # creating percentage based on countries "beliefs" 
+  mutate(total = percent_yes(Q25),                            
+         percent = (sum(total, na.rm = TRUE) / length(WP5)) * 100,        # creating percentage based on countries "beliefs"
+         regions = case_when(
+           Regions_Report == 1 ~ 'Africa',
+           Regions_Report == 2 ~ 'Africa',
+           Regions_Report == 4 ~ 'Africa',
+           Regions_Report == 5 ~ 'Africa',
+           Regions_Report == 18 ~ 'Africa',                      # creating a regions variable that combines all regions into one 
+           Regions_Report == 3 ~ 'Middle East',
+           Regions_Report == 14 ~ 'Middle East',
+           Regions_Report == 6 ~ 'Americas',
+           Regions_Report == 7 ~ 'Americas',
+           Regions_Report == 8 ~ 'Americas',
+           Regions_Report == 14 ~ 'Europe',
+           Regions_Report == 15 ~ 'Europe',
+           Regions_Report == 16 ~ 'Europe',
+           Regions_Report == 17 ~ 'Europe',
+           Regions_Report == 9 ~ 'Asia',
+           Regions_Report == 10 ~ 'Asia',
+           Regions_Report == 11 ~ 'Asia',
+           Regions_Report == 12 ~ 'Asia',
+           TRUE ~ 'NA'
+         ))              
 ```
+
+
 
 
 ```{r, echo=FALSE}
 countries %>%
-  ggplot(aes(x = percent, y = YEAR_CALENDAR, group = WP5)) + 
-  geom_point()
+  ggplot(aes(x = WP5, y = percent, group = WP5, label = WP5)) +         # grouping by country
+  geom_point(aes(color = WBI, fill = WBI),                              # filling by world income level
+               size = 2.5, alpha = 0.5,
+               shape = 21) +
+  facet_wrap(~ regions) +                                               # creating separate plots based on region
+  xlab("Countries") +
+  ylab("Percent who Believe Vaccines are Safe") +
+  ggtitle("Percent of People who believe Vaccines are Safe By Country and Global Region") +
+  geom_text(data = subset(countries, percent > 50)) +                 # labeling countries with percent higher than 50
+  theme(plot.title = element_text(hjust = 0.5)) +
+  theme_classic() 
 ```
 
 
