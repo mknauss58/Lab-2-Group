@@ -1,0 +1,213 @@
+---
+title: "Lab 2"
+author: "Cesar Nillaga"
+date: "4/11/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r, echo = FALSE, message=FALSE}
+library(tidyverse)
+library(readxl)
+library(ggplot2)
+library(dplyr)
+library(cowplot)
+library(colorspace)
+library(ggrepel)
+```
+
+
+### Dissecting a Bad Visualization
+
+1. While there are certainly issues with this image, do your best to tell the story of this graph in words. That is, what is this graph telling you? What do you think the authors meant to convey with it?
+
+The graph is showing the distribution of the world countries and they're beliefs on whether the vaccine is safe or not. The dark lines in the distribution show the median for each region group in the world. It would appear that the authors are trying to show the differences between countries in a region and then the overall difference between regions. 
+
+2. List the variables that appear to be displayed in this visualization.
+
++ Region
++ Country 
++ Belief Percentage 
+
+3. Now that you're versed in the grammar of graphics (ggplot), list the aesthetics used and which variables are specified for each.
+
++ frontface; region 
++ color; region 
+
+4. What type of graph would you call this?
+
++ line chart or scatterplot 
+
+5. List all of the problems or things you would improve about this graph.  
+
++ The scale is misleading, Former Soviet Union and Asia have some values in which people who believe vaccines are safe and its look as if Asia is higher than the other country. 
++ The extra points that are labeled may not be necessary if they are just trying to compare the larger countries of the world. 
+
+
+### Improving the Bad Visualization
+
+
+```{r, echo = FALSE}
+countries <- read_excel("wgm2018-dataset-crosstabs-all-countries.xlsx", sheet = "Full dataset")   # reading in dataset 
+```
+
+
+```{r, echo = FALSE}
+# from the dataset anything greater than three iS considered as yes 
+percent_yes <- function(question){
+  if_else(question >= 3, 1, 0, missing = NULL)         
+}
+```
+
+
+
+
+```{r, echo=FALSE}
+countries <- countries %>%
+  group_by(WP5) %>%
+  mutate(total = percent_yes(Q25),                            
+         percent = (sum(total, na.rm = TRUE) / length(WP5)) * 100,        # creating percentage based on countries "beliefs"
+         regions = case_when(
+           Regions_Report == 1 ~ 'Africa',
+           Regions_Report == 2 ~ 'Africa',
+           Regions_Report == 4 ~ 'Africa',
+           Regions_Report == 5 ~ 'Africa',
+           Regions_Report == 18 ~ 'Africa',                      # creating a regions variable that combines all regions into one 
+           Regions_Report == 3 ~ 'Middle East',
+           Regions_Report == 14 ~ 'Middle East',
+           Regions_Report == 6 ~ 'Americas',
+           Regions_Report == 7 ~ 'Americas',
+           Regions_Report == 8 ~ 'Americas',
+           Regions_Report == 14 ~ 'Europe',
+           Regions_Report == 15 ~ 'Europe',
+           Regions_Report == 16 ~ 'Europe',
+           Regions_Report == 17 ~ 'Europe',
+           Regions_Report == 9 ~ 'Asia',
+           Regions_Report == 10 ~ 'Asia',
+           Regions_Report == 11 ~ 'Asia',
+           Regions_Report == 12 ~ 'Asia',
+           TRUE ~ 'NA'
+         ))              
+```
+
+
+
+
+```{r, echo=FALSE}
+countries %>%
+  ggplot(aes(x = WP5, y = percent, group = WP5, label = WP5)) +         # grouping by country
+  geom_point(aes(color = WBI, fill = WBI),                              # filling by world income level
+               size = 2.5, alpha = 0.5,
+               shape = 21) +
+  facet_wrap(~ regions) +                                               # creating separate plots based on region
+  xlab("Countries") +
+  ylab("Percent who Believe Vaccines are Safe") +
+  ggtitle("Percent of People who believe Vaccines are Safe By Country and Global Region") +
+  geom_text(data = subset(countries, percent > 50)) +                 # labeling countries with percent higher than 50
+  theme(plot.title = element_text(hjust = 0.5)) +
+  theme_classic() 
+```
+
+
+
+## Part Two: Broad Visualization Improvement (200 points)
+
+
+### Second Data Visualization Improvement
+
+1. Page 66 Chart 3.8. The others here are trying to show relationship between the countries life expectancy and people who trust the doctors and nurses. The others are really just trying to show the differences between countries but I believe there can be something improved about this graph that wasn't factored in. 
+2. 
++ Countries Life Expectancy 
++ Trust for nurses or doctors
+
+3. aes(x = Life Expectancy, y = Trust for nurses or doctors)
+
+4. Scatterplot
+
+5. I feel the only problem is the graph doesn't tell the whole story. Some countries have different income levels so this can be huge factor in life expectancy and this can also be related to trust in nurses and doctors. If there isnt enough money for the healthcare workers people may not have a large amount of trust in them. 
+
+6. 
+
+```{r, echo=FALSE}
+percent_yes <- function(question){
+  if_else(question <= 2, 1, 0, missing = NULL)                    # change values based on survey questions
+}
+
+countries <- countries %>%                                        # creating new variable based on nurses survey
+  group_by(WP5) %>%
+  mutate(total1 = percent_yes(Q22),
+         percent_nurse = (sum(total1, na.rm = TRUE) / length(WP5)) * 100,
+         life_exp = mean(Age, na.rm = TRUE))      
+```
+
+
+
+
+```{r, echo=FALSE}
+countries %>%
+  ggplot(aes(life_exp, percent_nurse)) +
+    geom_point(aes(color = WBI, fill = WBI),
+               size = 2.5, alpha = 0.5,
+               shape = 21) +
+  xlab("Average Life Expectancy") +
+  ylab("Percentage who have trust in doctors/nurses") +
+  theme_classic() 
+```
+
+
+### Second Data Visualization Improvement
+* Chart 2.16: Differences in perceived knowledge of science between men and women by region on page 41 could be improved a little. This chart is meant to be showing the discrepancy between knowledge of science between genders across the world.
+* % difference in perceived knowledge of science, region
+* x = % difference, y = region
+* I would call this a barchart
+* The graph actually does a pretty good job of displaying the data it says it is portraying but I believe a lot more could be done with this graph to make it less cluttered and also display more info at the same time. The graph I have created not only displays the difference between men and women for each region but also the individual percentages for each gender. I also consolidated the regions to make the graph more readable. Overall I believe this graph shows more info in a neater orientation.
+
+```{r}
+male <- countries %>%
+  group_by(WP5) %>%
+  filter(Gender == 2) %>%
+  mutate(total = percent_yes(Q1),
+         percent = (sum(total, na.rm = TRUE) / length(WP5)) * 100
+  )
+
+female <- countries %>%
+  group_by(WP5) %>%
+  filter(Gender == 1) %>%
+  mutate(total = percent_yes(Q1), 
+         percent = (sum(total, na.rm = TRUE) / length(WP5)) * 100
+  )
+
+
+male <- male %>% 
+  tibble::as_tibble() %>%
+  group_by(regions) %>%
+  summarise_at(vars(percent), list(Avg = mean))
+
+female <- female %>% 
+  tibble::as_tibble() %>%
+  group_by(regions) %>%
+  summarise_at(vars(percent), list(Avg = mean))
+
+final <- merge(male, female, by = "regions")
+
+final <- final %>% 
+  mutate(
+  diff = Avg.x - Avg.y)
+colnames(final) <- c("Regions", "Male", "Female", "Difference")
+```
+
+
+```{r}
+final %>%
+  ggplot() +
+  geom_bar(aes(y=Male, x = Regions), stat="identity", alpha=.8, fill='lightblue', color='lightblue4') +
+  geom_bar(aes(y=Female, x = Regions), stat="identity", alpha=.5, fill='pink', color='red') +
+       geom_text(aes(label = round(Difference,2), x=Regions, y=Male), vjust = 1.5, colour = "black", size = 1.5) +
+  labs(title = "Percieved Knowledge of Science by Region and Gender", x = "Region", y = "% answer a lot / some") +
+  theme_classic()
+```
+
